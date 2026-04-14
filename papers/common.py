@@ -117,6 +117,30 @@ def lattice_y(j, spacing):
     return HEADER_HEIGHT + MARGIN + j * spacing
 
 
+def hline(img, top_y, color=FG_COLOR, thickness=ELEM_SIZE,
+          left=None, right=None):
+    """Horizontal line of given thickness; spans the usable rect by default."""
+    if left is None:
+        left = MARGIN
+    if right is None:
+        right = WIDTH - 1 - MARGIN
+    ImageDraw.Draw(img).rectangle(
+        [left, top_y, right, top_y + thickness - 1], fill=color
+    )
+
+
+def vline(img, left_x, color=FG_COLOR, thickness=ELEM_SIZE,
+          top=None, bottom=None):
+    """Vertical line of given thickness; spans the usable rect by default."""
+    if top is None:
+        top = HEADER_HEIGHT + MARGIN
+    if bottom is None:
+        bottom = HEIGHT - 1 - MARGIN
+    ImageDraw.Draw(img).rectangle(
+        [left_x, top, left_x + thickness - 1, bottom], fill=color
+    )
+
+
 # === Output ==================================================================
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
