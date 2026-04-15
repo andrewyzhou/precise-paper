@@ -131,13 +131,29 @@ ul:     (−P_x/2,   −P_y/3)
 
 Derived from the centroid of three mutually adjacent hex centers, so adjacent hexes share vertices algebraically.
 
-| density | P_x | P_y | LINE_WIDTH | P_y/3 integer? | hexes |
-|---|---|---|---|---|---|
-| regular | 250 | 210 | 10 | yes (70) | 1709 |
-| extra | 150 | 125 | 6 | no (~41.67) | 4718 |
-| super | 110 | 100 | 4 | no (~33.33) | 8003 |
+### Hex margin math (different from dot/line modes)
 
-When `P_y` isn't divisible by 3, vertex offsets are fractional. Floats are passed to PIL directly — adjacent hexes reference the **same** float, so tessellation is seamless under anti-aliasing.
+A hex extends outward from its center by `P_x/2` horizontally and `2·P_y/3` vertically, plus `LW/2` line thickness. Placing hex **centers** on the dot lattice would overflow: the first hex's leftmost pixel would land at `edge_margin(LW) − P_x/2 − LW/2`, which is negative for every density. Instead, anchor the leftmost **outline pixel** to `M_x` and solve for hex counts:
+
+```
+N_x_even = LATTICE_W // P_x            (one fewer than the dot lattice)
+N_x_odd  = N_x_even − 1
+M_x      = edge_margin(LW)             (exact match with graph/dotted)
+N_y      = LATTICE_H // P_y
+M_y      = (USABLE_H − (N_y−1)·P_y − 4·P_y/3 − LW) / 2
+first_cx = M_x + P_x/2 + LW/2
+first_cy = HEADER_HEIGHT + M_y + 2·P_y/3 + LW/2
+```
+
+Horizontal margins land exactly on edge_margin. Vertical margins are per-density best-fit (top == bottom) — they come out **smaller than 120 px** because the hex aspect (`4·P_y/(3·P_x) ≈ 1.15`) doesn't match the usable rect aspect (`8260/10750 ≈ 0.77`), so there's less leftover whitespace vertically.
+
+| density | P_x | P_y | LW | N_x_even × N_y | hexes | M_x | M_y |
+|---|---|---|---|---|---|---|---|
+| regular | 250 | 210 | 10 | 33 × 50 | 1633 | **120** | **85** |
+| extra | 150 | 125 | 6 | 55 × 84 | 4578 | **122** | **~101.17** |
+| super | 110 | 100 | 4 | 75 × 105 | 7822 | **123** | **~106.33** |
+
+Odd rows have `N_x_odd = N_x_even − 1` hexes (shifted by `P_x/2`). When `P_y` isn't divisible by 3, vertex offsets are fractional floats — but adjacent hexes reference the same float, so tessellation stays seamless under anti-aliasing.
 
 ## Mode: storyboard
 
