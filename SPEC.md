@@ -76,11 +76,11 @@ Rationale for per-density DOT_SIZE: `DOT_SIZE/SPACING = 8%` across all densities
 
 | density | SPACING | LINE_WIDTH | edge_margin | lines |
 |---|---|---|---|---|
-| regular | 250 | 10 | 120 | 43 |
-| extra | 150 | 10 | 120 | 71 |
-| super | 125 | 10 | 120 | 85 |
+| regular | 250 | 10 | 120 | 42 |
+| extra | 150 | 10 | 120 | 70 |
+| super | 125 | 10 | 120 | 84 |
 
-Lines are full-width (edge-to-edge of usable rect). Thickness fixed at 10 px across densities — lined paper reads cleanest with uniform line weight.
+Lines are full-width (edge-to-edge of usable rect). Thickness fixed at 10 px — uniform line weight reads cleanest on lined paper. **Line 0 is skipped** (only 120 px of writing room above it — too tight). First visible baseline is at `j=1`, so every writing row is `SPACING` tall including the top one.
 
 ## Mode: graph
 
@@ -94,13 +94,13 @@ Regular's 10/250 = 4% is the baseline. Extra scales exactly. Super drops to 4 px
 
 ## Mode: cornell
 
-Lined background plus a vertical cue divider and a horizontal summary divider. Same line width (10 px) as lined. Dividers snap to lattice indices chosen to keep ratios consistent.
+Lined background plus a vertical cue divider and a horizontal summary divider. Same line width (10 px) as lined, and same **line 0 skip** — first writable row is full `SPACING` tall. The cue divider extends from the header bottom (row 250) down to the summary row, making the cue column a full-height writing zone.
 
-| density | SPACING | cue_col | cue_width | summary_row | summary_pos |
-|---|---|---|---|---|---|
-| regular | 250 | 8 | 2000 px (24.2%) | 34 | 80.9% |
-| extra | 150 | 14 | 2100 px (25.4%) | 56 | 79.9% |
-| super | 125 | 17 | 2125 px (25.7%) | 67 | 79.7% |
+| density | SPACING | lines | cue_col | cue_width | summary_row | summary_pos |
+|---|---|---|---|---|---|---|
+| regular | 250 | 42 | 8 | 2000 px (24.2%) | 34 | 80.9% |
+| extra | 150 | 70 | 14 | 2100 px (25.4%) | 56 | 79.9% |
+| super | 125 | 84 | 17 | 2125 px (25.7%) | 67 | 79.7% |
 
 ## Mode: isometric
 
