@@ -174,6 +174,28 @@ Allowed cols: {2, 4, 5, 7, 10, 14, 20, 28, ...}. Allowed rows: {2, 5, 10}.
 
 OUTLINE scales with cell min-dim: regular 10/4130 ≈ 0.24%; extra and super scale down proportionally.
 
+## Mode: cheatsheet
+
+Dotted background (reuses dotted's `DOT_SIZES = {20, 12, 10}`) plus two vertical dividers splitting the page into three columns. Dividers land on dot-gap midpoints per density and use graph-scheme line widths (10/6/4).
+
+3-column symmetric dot splits:
+
+| density | split | divider centers | divider left_x | line width |
+|---|---|---|---|---|
+| regular | 11 / 12 / 11 | 2750, 5750 | 2745, 5745 | 10 |
+| extra | 19 / 18 / 19 | 2900, 5600 | 2897, 5597 | 6 |
+| super | 22 / 23 / 22 | 2812.5, 5687.5 | 2811, 5686 | 4 |
+
+Visual column widths (first/middle/last, in px):
+
+| density | widths | middle Δ |
+|---|---|---|
+| regular | 2635 / 3000 / 2634 | +365 |
+| extra | 2781 / 2700 / 2780 | −81 |
+| super | 2693 / 2875 / 2692 | +182 |
+
+The middle section carries one more dot column than each side section (required by odd splits) — an unavoidable tradeoff for symmetric dot counts on asymmetric totals. Dividers run from header bottom (row 250) down to the bottom margin (`HEIGHT − 1 − edge_margin(LINE_WIDTH)`).
+
 ## Allowed elements summary
 
 For any element of integer size E to use the canonical `{250, 150, 125}` SPACING set, E must be even (for `edge_margin(E)` integer) and fit visually.
