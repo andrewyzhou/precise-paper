@@ -1,6 +1,8 @@
 # paper-generation
 
-Pixel-perfect paper templates for personal notes, cheatsheets, study sheets, etc. Every page is rendered at **8.5" × 11" @ 1000 DPI** (8500 × 11000 px) with the same usable rectangle, header, and exactly equal 120 px margins on all four sides — across every mode and every density.
+Pixel-perfect paper templates for personal notes, cheatsheets, study sheets, etc. Every page is rendered at **8.5" × 11" @ 1000 DPI** (8500 × 11000 px) with the same usable rectangle, header, and a shared center-margin invariant (125 px from element center to rect edge) across every mode and every density.
+
+See **[SPEC.md](SPEC.md)** for exact pixel numbers, dot/line sizes, density ratios, and the math.
 
 ## Modes
 
