@@ -15,7 +15,6 @@ Each mode comes in three densities: **regular**, **extra**, **super**. The ortho
 | [isometric](papers/isometric.ipynb) | triangular dot lattice (~60°, < 1.2° deviation) | [`output/isometric/`](output/isometric/) |
 | [hex](papers/hex.ipynb) | tessellated pointy-top hexagons | [`output/hex/`](output/hex/) |
 | [storyboard](papers/storyboard.ipynb) | tiled rectangle frames | [`output/storyboard/`](output/storyboard/) |
-| [music](papers/music.ipynb) | 5-line music staves | [`output/music/`](output/music/) |
 
 **A note on isometric / hex:** true 60° lattices require an irrational `P_y/P_x = sqrt(3)/2`, which can't coexist with both integer pixel coordinates AND exact 120 px margins. The chosen `(P_x, P_y)` pairs deviate from 60° by less than 1.2° per density — visually indistinguishable at 1000 DPI. Hex vertex offsets `P_y/3` are sub-pixel for two of the three densities; floats are passed to PIL so adjacent hexes still share the same vertex (seamless tessellation under anti-aliasing).
 
@@ -31,8 +30,7 @@ paper-generation/
 │   ├── cornell.ipynb
 │   ├── isometric.ipynb
 │   ├── hex.ipynb
-│   ├── storyboard.ipynb
-│   └── music.ipynb
+│   └── storyboard.ipynb
 └── output/
     ├── dotted/{dotted,extra-dotted,super-dotted}.png
     ├── lined/...
