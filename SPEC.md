@@ -194,7 +194,7 @@ Visual column widths (first/middle/last, in px):
 | extra | 2781 / 2700 / 2780 | −81 |
 | super | 2693 / 2875 / 2692 | +182 |
 
-The middle section carries one more dot column than each side section (required by odd splits) — an unavoidable tradeoff for symmetric dot counts on asymmetric totals. Dividers run from header bottom (row 250) down to the bottom margin (`HEIGHT − 1 − edge_margin(LINE_WIDTH)`).
+The middle section carries one more dot column than each side section (required by odd splits) — an unavoidable tradeoff for symmetric dot counts on asymmetric totals. Dividers run from header bottom (row 250) all the way down to the bottom of the page (row `HEIGHT − 1`).
 
 ## Allowed elements summary
 
