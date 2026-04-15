@@ -8,40 +8,41 @@ Shared geometry primitives for all paper modes.
 ║  A solid header rectangle of HEADER_HEIGHT rows fills the very top       ║
 ║  (rows 0 .. HEADER_HEIGHT−1). Everything below — rows HEADER_HEIGHT ..   ║
 ║  HEIGHT−1, full width — is the "usable rectangle" where the pattern      ║
-║  lives. EVERY mode and EVERY density places its primitive elements with  ║
-║  the SAME MARGIN px gap between element edge and rectangle edge on all   ║
-║  four sides. Top, bottom, left, right are exactly equal.                 ║
+║  lives.                                                                  ║
 ║                                                                          ║
-║  ALL MATH IS EDGE-BASED — we never reason about element "centers". PIL's ║
-║  paste() and rectangle() take pixel-aligned coordinates, so edge-math is ║
-║  the natural unit and avoids //2 conversion noise.                       ║
+║  CENTER-BASED MARGIN (the invariant).                                    ║
+║  CENTER_MARGIN is the distance from the CENTER of a primitive element    ║
+║  (dot / line / frame-edge) to the usable-rect edge. It is the same 125   ║
+║  px for every mode and every density. The EDGE-to-rect-edge margin       ║
+║  depends on the element's size:                                          ║
+║      edge_margin(elem_size) = CENTER_MARGIN − elem_size // 2             ║
+║  For the canonical elem_size = 10, edge_margin = 120 px — same as before ║
+║  we started varying sizes per density.                                   ║
 ║                                                                          ║
-║  The "primitive element" is one ELEM_SIZE × ELEM_SIZE pixel box:         ║
-║    • Dotted modes → a circular dot occupying that box.                   ║
-║    • Lined / graph / cornell → a line of thickness ELEM_SIZE.            ║
-║  Keeping ELEM_SIZE shared across modes is what allows every mode to use  ║
-║  the SAME LATTICE_W/LATTICE_H and the same allowed SPACING set.          ║
+║  WHY CENTER-BASED? We want to vary element size per density (bigger      ║
+║  dots in sparse grids, thinner lines in dense graphs) while keeping the  ║
+║  LATTICE itself — where element CENTERS sit — IDENTICAL across every     ║
+║  density. Keeping CENTER_MARGIN fixed is what makes that true:           ║
+║      LATTICE_W = WIDTH      − 2·CENTER_MARGIN =  8250                    ║
+║      LATTICE_H = HEIGHT − HEADER_HEIGHT − 2·CENTER_MARGIN = 10500        ║
+║  These depend only on CENTER_MARGIN, NOT on elem_size. So the allowed    ║
+║  SPACING set (divisors of gcd(8250,10500) = 750) is density-independent. ║
 ║                                                                          ║
-║  Lattice equations. For a chosen SPACING:                                ║
+║  All underlying rasterization is still EDGE-BASED (PIL paste/rectangle   ║
+║  take corners, not centers). edge_margin() converts from the center-     ║
+║  invariant model back to edge coordinates just-in-time.                  ║
+║                                                                          ║
+║  Lattice equations. For spacing S and element size E:                    ║
 ║    element (i,j) top-left pixel =                                        ║
-║        ( MARGIN + i·SPACING ,  HEADER_HEIGHT + MARGIN + j·SPACING )      ║
-║    n_x = LATTICE_W // SPACING + 1                                        ║
-║    n_y = LATTICE_H // SPACING + 1                                        ║
-║  where                                                                   ║
-║    LATTICE_W = WIDTH      − 2·MARGIN − ELEM_SIZE                         ║
-║    LATTICE_H = HEIGHT − HEADER_HEIGHT − 2·MARGIN − ELEM_SIZE             ║
+║        ( edge_margin(E) + i·S ,                                          ║
+║          HEADER_HEIGHT + edge_margin(E) + j·S )                          ║
+║    n_x = LATTICE_W // S + 1                                              ║
+║    n_y = LATTICE_H // S + 1                                              ║
 ║                                                                          ║
-║  For the right/bottom margin to land EXACTLY on MARGIN px (not less),    ║
-║  SPACING must divide both LATTICE_W and LATTICE_H. With current values   ║
-║  LATTICE_W = 8250 and LATTICE_H = 10500, gcd = 750. Allowed SPACINGs     ║
-║  are divisors of 750: 1, 2, 3, 5, 6, 10, 15, 25, 30, 50, 75, 125, 150,   ║
-║  250, 375, 750. Every mode uses the canonical {250, 150, 125} for its    ║
-║  three densities (regular / extra / super).                              ║
-║                                                                          ║
-║  Even vs. odd ELEM_SIZE: even sizes have a sub-pixel geometric center;   ║
-║  odd sizes have a true center pixel. Either works for our lattice — the  ║
-║  offset is uniform — but parity matters for whether MARGIN comes out an  ║
-║  integer. With even WIDTH and even MARGIN, even ELEM_SIZE is safe.       ║
+║  Parity. For edge_margin(E) = 125 − E//2 to round correctly and for      ║
+║  the rightmost/bottommost element to land exactly on the mirror margin,  ║
+║  E must be EVEN. Odd E leaves a 1 px asymmetry. (Even CENTER_MARGIN and  ║
+║  even WIDTH/HEIGHT/HEADER_HEIGHT are required; they all are.)            ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 """
 
@@ -57,13 +58,13 @@ BG_COLOR = (255, 255, 255)
 FG_COLOR = (210, 210, 210)   # dots, lines, header — same color throughout
 
 # === Geometry ================================================================
-ELEM_SIZE     = 10    # pixel diameter of dot / pixel thickness of line
-SUPERSAMPLE   = 8     # render dots at 8× then downscale for AA
-MARGIN        = 120   # empty pixels between element edge and usable-rect edge
+CENTER_MARGIN = 125   # element-center to usable-rect-edge (INVARIANT across densities)
 HEADER_HEIGHT = 250   # rows occupied by header rect at top of page
+SUPERSAMPLE   = 8     # render dots at 8× then downscale for AA
 
-LATTICE_W = WIDTH  - 2 * MARGIN - ELEM_SIZE                   # 8250
-LATTICE_H = HEIGHT - HEADER_HEIGHT - 2 * MARGIN - ELEM_SIZE   # 10500
+# Lattice extent (where element CENTERS can sit). Independent of elem_size.
+LATTICE_W = WIDTH  - 2 * CENTER_MARGIN                   # 8250
+LATTICE_H = HEIGHT - HEADER_HEIGHT - 2 * CENTER_MARGIN   # 10500
 
 # Canonical 3-density set (divisors of gcd(LATTICE_W, LATTICE_H) = 750):
 SPACING_REGULAR = 250
@@ -76,7 +77,19 @@ DENSITIES = {
     "super":   SPACING_SUPER,
 }
 
+# Backwards-compatible aliases for modes that use a fixed elem_size:
+DEFAULT_ELEM_SIZE = 10
+ELEM_SIZE         = DEFAULT_ELEM_SIZE                 # legacy alias
+MARGIN            = CENTER_MARGIN - ELEM_SIZE // 2    # legacy edge-margin = 120
+
+
 # === Helpers =================================================================
+
+def edge_margin(elem_size=DEFAULT_ELEM_SIZE):
+    """Empty pixels between element edge and usable-rect edge for this size.
+    Equals CENTER_MARGIN − elem_size//2; always integer for even elem_size."""
+    return CENTER_MARGIN - elem_size // 2
+
 
 def blank_page():
     """Fresh white canvas."""
@@ -90,7 +103,7 @@ def draw_header(img, color=FG_COLOR):
     )
 
 
-def make_dot_template(size=ELEM_SIZE, color=FG_COLOR, ss=SUPERSAMPLE):
+def make_dot_template(size=DEFAULT_ELEM_SIZE, color=FG_COLOR, ss=SUPERSAMPLE):
     """Antialiased circular dot rendered at ss× then LANCZOS-downscaled."""
     hi = size * ss
     dot_hi = Image.new("RGB", (hi, hi), BG_COLOR)
@@ -99,7 +112,8 @@ def make_dot_template(size=ELEM_SIZE, color=FG_COLOR, ss=SUPERSAMPLE):
 
 
 def grid_counts(spacing):
-    """(n_x, n_y) for a given SPACING. Asserts the lattice fits exactly."""
+    """(n_x, n_y) for a given SPACING. Asserts the lattice fits exactly.
+    Independent of element size — the lattice is center-defined."""
     assert LATTICE_W % spacing == 0 and LATTICE_H % spacing == 0, (
         f"SPACING={spacing} must divide LATTICE_W={LATTICE_W} "
         f"and LATTICE_H={LATTICE_H}"
@@ -107,35 +121,35 @@ def grid_counts(spacing):
     return LATTICE_W // spacing + 1, LATTICE_H // spacing + 1
 
 
-def lattice_x(i, spacing):
-    """Pixel column of the left edge of element (i, _)."""
-    return MARGIN + i * spacing
+def lattice_x(i, spacing, elem_size=DEFAULT_ELEM_SIZE):
+    """Pixel column of the LEFT EDGE of element (i, _) with given size."""
+    return edge_margin(elem_size) + i * spacing
 
 
-def lattice_y(j, spacing):
-    """Pixel row of the top edge of element (_, j)."""
-    return HEADER_HEIGHT + MARGIN + j * spacing
+def lattice_y(j, spacing, elem_size=DEFAULT_ELEM_SIZE):
+    """Pixel row of the TOP EDGE of element (_, j) with given size."""
+    return HEADER_HEIGHT + edge_margin(elem_size) + j * spacing
 
 
-def hline(img, top_y, color=FG_COLOR, thickness=ELEM_SIZE,
+def hline(img, top_y, color=FG_COLOR, thickness=DEFAULT_ELEM_SIZE,
           left=None, right=None):
-    """Horizontal line of given thickness; spans the usable rect by default."""
+    """Horizontal line; spans edge-to-edge of the usable rect by default."""
     if left is None:
-        left = MARGIN
+        left = edge_margin(thickness)
     if right is None:
-        right = WIDTH - 1 - MARGIN
+        right = WIDTH - 1 - edge_margin(thickness)
     ImageDraw.Draw(img).rectangle(
         [left, top_y, right, top_y + thickness - 1], fill=color
     )
 
 
-def vline(img, left_x, color=FG_COLOR, thickness=ELEM_SIZE,
+def vline(img, left_x, color=FG_COLOR, thickness=DEFAULT_ELEM_SIZE,
           top=None, bottom=None):
-    """Vertical line of given thickness; spans the usable rect by default."""
+    """Vertical line; spans edge-to-edge of the usable rect by default."""
     if top is None:
-        top = HEADER_HEIGHT + MARGIN
+        top = HEADER_HEIGHT + edge_margin(thickness)
     if bottom is None:
-        bottom = HEIGHT - 1 - MARGIN
+        bottom = HEIGHT - 1 - edge_margin(thickness)
     ImageDraw.Draw(img).rectangle(
         [left_x, top, left_x + thickness - 1, bottom], fill=color
     )
